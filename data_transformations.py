@@ -4,13 +4,8 @@ import logging
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
-import shapely.ops as ops
-import warnings
 
-import lib.clustering_funcs as clst_funcs
 import lib.data_utils as dt_uts
-import lib.load_and_store_data_utils as ld_uts
-import lib.polygon_utils as pol_uts
 from lib.print_out_info import print_out_info
 
 
@@ -356,8 +351,9 @@ def add_day_trend_variable(
     Returns:
         data: data with trend variable added
 
-    TODO: trend variable is assumed to be linear. Add non-linearity term as input.
-    TODO: Only day trend is calculated now, add more options.
+    TODO:
+     - trend variable is assumed to be linear. Add non-linearity term as input.
+     - only day trend is calculated now, add more options.
     """
 
     date_range = pd.date_range(data[trend_variable].min(),

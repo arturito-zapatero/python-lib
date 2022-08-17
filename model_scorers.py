@@ -90,6 +90,8 @@ def calculate_error_metrics(
         available_scorers.append(mae_total_no_negative)
     if "rmse" in conf['evaluation_model_scorers']:
         available_scorers.append(rmse)
+    if "rmsle" in conf['evaluation_model_scorers']:
+        available_scorers.append(rmsle)
     if "mse" in conf['evaluation_model_scorers']:
         available_scorers.append(mse)
 
@@ -155,6 +157,7 @@ def mae_total_no_negative(
 
     Returns:
         error: error
+    NOTE: if half our prediction will be 50% to high, whereas other half 50% too low, MAE total = 0
     """
     y_pred[y_pred < 0] = 0
     sum_true = sum(y_true)
@@ -182,7 +185,7 @@ def make_evaluation_scorers(
     if not scorers_names:
         scorers_names = ['rmse']
 
-    available_scorers = [rmsle_no_negative, mape, mae, mape_no_negative, mape_total,
+    available_scorers = [rmsle_no_negative, rmsle, mape, mae, mape_no_negative, mape_total,
                          mae_no_negative, mape_total_no_negative, mae_total_no_negative, rmse, mse]
     scorers_list = []
     for available_scorer in available_scorers:
@@ -191,7 +194,7 @@ def make_evaluation_scorers(
 
     scorers = {}
     for ind, scorer in enumerate(scorers_list):
-        scorers[scorers_names[ind]] = skl_mt.make_scorer(scorer, greater_is_better=False)
+        scorers[scorers_list[ind].__name__] = skl_mt.make_scorer(scorer, greater_is_better=False)
 
     return scorers
 
@@ -255,6 +258,7 @@ def mape_total_no_negative(
     Returns:
         error: error
     """
+
     y_pred[y_pred < 0] = 0
 
     sum_true = sum(y_true)
@@ -301,7 +305,7 @@ def mse(
     """
     error = skl_mt.mean_squared_error(y_true,
                                       y_pred,
-                                      squared=False,
+                                      squared=True,
                                       multioutput='uniform_average')
 
     return error
@@ -322,8 +326,31 @@ def rmse(
     """
     error = skl_mt.mean_squared_error(y_true,
                                       y_pred,
-                                      squared=True,
+                                      squared=False,
                                       multioutput='uniform_average')
+
+    return error
+
+
+def rmsle(
+    y_true: np.ndarray,
+    y_pred: list
+):
+    """
+    Root Mean Squared Logged Error scorer.
+    Note: will produce very large values if any of the y_true values = 0(?). Can be used if y_true or y_pred have zero
+    values.
+    Args:
+        y_true: vector of true values of target variable
+        y_pred: vector of predicted values of target variable
+
+    Returns:
+        error: error
+    """
+
+    error = skl_mt.mean_squared_log_error(y_true,
+                                          y_pred,
+                                          squared=False)
 
     return error
 
@@ -345,6 +372,7 @@ def rmsle_no_negative(
     """
     y_pred[y_pred < 0] = 0
     error = skl_mt.mean_squared_log_error(y_true,
-                                          y_pred)
+                                          y_pred,
+                                          squared=False)
 
     return error

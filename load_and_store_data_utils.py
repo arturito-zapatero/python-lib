@@ -1,21 +1,13 @@
-import awswrangler as wr
 import boto3
 import datetime
-import joblib
 import logging
 import os
 import pandas as pd
-from sklearn.pipeline import Pipeline
 import tempfile
 import warnings
 
 import lib.base_utils as bs_uts
-import lib.weather_utils as wt_uts
-import lib.dynamo_utils as dyn_uts
-import lib.load_and_store_maps_utils as ld_mp_uts
 from lib.print_out_info import print_out_info
-import lib.sql_utils as sql_uts
-import lib.clustering_funcs as cls_funcs
 
 
 @print_out_info
@@ -131,7 +123,6 @@ def filter_and_sample_model_data(
 
     TODO:
      - set max row sampling (e.g. if over 32 gigabytes, limit to 32 gigabytes)?
-     - should we use config, or pass all parameters explicitly?
 
     """
     # Check the dataframe size (megabytes)
@@ -166,41 +157,5 @@ def filter_and_sample_model_data(
 
     else:
         data = data
-
-    return data
-
-
-@print_out_info
-def load_df_from_cloud(
-    cloud_environment: str,
-    storage_type: str,
-    bucket: str,
-    key: str,
-    file_type: str
-) -> pd.DataFrame:
-    """
-    Loads data file from cloud as pandas dataframe.
-    Args:
-        cloud_environment: from which cloud data is to be loaded (available: 'AWS')
-        storage_type: storage type, currently only S3 supported
-        bucket: bucket name
-        key: file key pointing to where data is stored
-        file_type: file data type
-    Returns:
-        data: data as pandas
-    """
-
-    if cloud_environment == 'AWS':
-        if storage_type == 's3':
-            data = bs_uts.s3_load_file_as_df(
-                s3_bucket=bucket,
-                key=key,
-                low_memory=False,
-                file_type=file_type
-            )
-        else:
-            raise Exception(f"Storage type {storage_type} not defined")
-    else:
-        warnings.warn(f"Cloud environment not known: {cloud_environment}")
 
     return data

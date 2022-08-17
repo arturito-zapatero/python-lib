@@ -1,15 +1,10 @@
-import warnings
-
 from haversine import haversine_vector
-import logging
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 from sklearn.cluster import KMeans
 
 import lib.data_utils as dt_uts
-import lib.map_utils as mp_uts
-import lib.polygon_utils as pol_uts
 from lib.print_out_info import print_out_info
 
 
@@ -22,6 +17,7 @@ def add_average_distance_per_cluster_col(
     col_cluster_id: str,
     col_distance: str
 ):
+
     """
     Takes data df and clusters df created on this data df, for each data row calculates distance between given
     data point and assigned cluster center. Calculates average distance from all data points assigned to one cluster.
@@ -100,8 +96,6 @@ def add_clusters_count_col(
 def add_clusters_info(
     data: pd.DataFrame,
     clusters: pd.DataFrame,
-    n_scooters: int,
-    n_events: int,
     cols_coords_data: list,
     cols_coords_clusters: list,
     col_cluster_id: str,
@@ -119,8 +113,6 @@ def add_clusters_info(
     Args:
         data: data df with assigned cluster information (assigned cluster lon and lat cols)
         clusters: clusters df
-        n_scooters: number of available scooters
-        n_events: total number of events in data df
         cols_coords_data: string denoting column
         cols_coords_clusters: string denoting column
         col_cluster_id: string denoting column
@@ -138,12 +130,6 @@ def add_clusters_info(
         col_cluster=col_cluster_id,
         col_count_data=col_count_data,
         col_count_clusters='cluster_size'
-    )
-
-    clusters = distribute_scooters_by_clusters(
-        clusters,
-        n_scooters,
-        n_events
     )
 
     # Merge cluster and data df
@@ -250,7 +236,7 @@ def calc_shortest_dist_between_clusters(
 ) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
     """
-    Calculates distance to closest cluster for each of the clusters and adds this information as a new column.
+    Calculates distance to the closest cluster for each of the clusters and adds this information as a new column.
     Also returns df with all possible distances between clusters combinations and df with minimum distance for
     each cluster.
     Args:
@@ -389,7 +375,7 @@ def obtain_n_clusters_range(
 ) -> range:
 
     """
-    Obtains the optimal number of DPs (n_clusters) based on the OA areas.
+    Obtains the optimal number of DPs (n_clusters) based on the area size.
     Args:
         oa_area: OA area in km2
         static_oa_area: static OA area in km2
@@ -418,6 +404,7 @@ def recreate_clusters_from_data(
     col_lon_clusters: str,
     col_lat_clusters: str
 ) -> pd.DataFrame:
+
     """
     Obtain information about clusters from data. Takes data df with col_cluster_id and creates a clusters df with
      col_cluster_id, col_lon_clusters and col_lat_clusters. Assumption is that there each cluster_id has a unique

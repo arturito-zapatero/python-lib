@@ -2,7 +2,6 @@ import datetime
 import datetime as dt
 import logging
 
-import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
@@ -231,8 +230,8 @@ def wf_evaluate_rf_model(
     )
 
     grid_result = rf_eval_model_pipeline.fit(
-        X_eval,
-        y_eval.values.ravel()
+        X=X_eval,
+        y=y_eval.values.ravel()
     )
 
     evaluation_results = create_evaluation_metrics_df(
@@ -242,8 +241,8 @@ def wf_evaluate_rf_model(
 
     if len(scorers_names) > 1:
         evaluation_results = md_scr.calculate_combined_scorers_metrics(
-            evaluation_results,
-            scorers_names
+            evaluation_results=evaluation_results,
+            scorers_names=scorers_names
         )
 
     return evaluation_results
@@ -279,10 +278,13 @@ def wf_train_rf_model(
         n_jobs=10
     )
     model_pipeline = Pipeline([('regression', model_definition)])
-    model_pipeline.fit(X_train, y_train.values.ravel())
+    model_pipeline.fit(
+        X=X_train,
+        y=y_train.values.ravel()
+    )
 
     # Predict on training data
-    y_hats = model_pipeline.predict(X_train)
+    y_hats = model_pipeline.predict(X=X_train)
 
     # Create dataframe with results indexed with cols_ids
     y_hats = pd.DataFrame(y_hats, columns=[conf['col_predict']])
@@ -312,7 +314,7 @@ def wf_predict_rf_model(
         y_hats: predictions (dataframe with one column: conf['col_predict']) and the same index as X_pred.
     """
 
-    y_hats = model_pipeline.predict(X_pred)
+    y_hats = model_pipeline.predict(X=X_pred)
     y_hats = pd.DataFrame(y_hats,
                           columns=[conf['col_predict']],
                           index=X_pred.index)
@@ -341,6 +343,7 @@ def wf_split_evaluation_data(
         X_eval: features data
         y_eval: target variable data
         wfv_generator: a generator object to be passed to GridSearchCV
+    NOTE: sampling should not be used if possible
     """
 
     if not isinstance(data, pd.DataFrame):
@@ -352,10 +355,15 @@ def wf_split_evaluation_data(
     if col_target not in data.columns:
         raise Exception("Target column missing in input DataFrame")
 
-    # Split data
-    X_eval = (data[cols_features_full + conf['cols_id']]
-              .sample(frac=conf['evaluation_clustered_sample_size'], random_state=23)
-              .dropna(how='any'))
+    # Split data and sample data
+    if conf['evaluation_clustered_sample_size'] != 1:
+        logger.info(f"Sampling with {conf['evaluation_clustered_sample_size']} used")
+        X_eval = (data[cols_features_full + conf['cols_id']]
+                  .sample(frac=conf['evaluation_clustered_sample_size'], random_state=23)
+                  .dropna(how='any'))
+    else:
+        X_eval = (data[cols_features_full + conf['cols_id']]
+                  .dropna(how='any'))
 
     dt_trf.low_days_warning(
         data=X_eval,
@@ -366,7 +374,9 @@ def wf_split_evaluation_data(
 
     x_index = X_eval.index
     y_eval = data.loc[x_index, [col_target] + conf['cols_id']]
+
     X_eval = X_eval.reset_index(drop=True)
+    y_eval = y_eval.reset_index(drop=True)
 
     # Get WFV indexes
     wfv_indexes = get_wfv_indexes(
@@ -378,8 +388,8 @@ def wf_split_evaluation_data(
 
     wfv_generator = yield_wfv(wfv_indexes)
 
-    X_eval = X_eval.set_index(conf['cols_id']).sort_index()
-    y_eval = y_eval.set_index(conf['cols_id']).sort_index()
+    X_eval = X_eval.set_index(conf['cols_id'])
+    y_eval = y_eval.set_index(conf['cols_id'])
 
     return X_eval, y_eval, wfv_generator
 
@@ -488,3 +498,15 @@ def wf_split_prediction_data(
     X_pred = X_pred.dropna(how='any')
 
     return X_pred
+
+def yield_wfv(wfv_indexes: list):
+    """
+    Creates a generator of WFV indexes to be used in evaluation (e.g. it can be passed as cv param in GridSearchCV)
+    Args:
+        wfv_indexes: list with lists of indexes created by get_wfv_indexes() function.
+
+    Returns:
+        generator of WFV indexes
+    """
+    for ind, _ in enumerate(wfv_indexes):
+        yield wfv_indexes[ind], wfv_indexes[ind]

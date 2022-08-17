@@ -1,12 +1,8 @@
-from datetime import datetime
 from decimal import Decimal
 import json
 import boto3
-import pandas as pd
 from boto3.dynamodb.conditions import Key
 import os
-import random
-import string
 
 
 def put_one_item_in_dynamodb(
@@ -213,7 +209,6 @@ def put_dictionary_in_dynamodb(
     Puts a dictionary in DynamoDB table. Puts every key value pair as separate table item (key in col_partition_key
      columns, value in col_value column).
 
-    TODO: sort key and values are not used in this version, can be done as sub-loop.
     Args:
         table_name: dynamoDB table
         dictionary: dictionary to be put in DynamoDB

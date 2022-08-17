@@ -1,4 +1,3 @@
-import haversine
 import pandas as pd
 import create_dataframes_blueprints as blp
 

@@ -53,30 +53,13 @@ def get_config_via_api_gw(
           f"/{config_api_resource_path}" \
           f"/{config_api_method_path}"
 
-    city_types = dyn_uts.get_dynamodb_table_with_query(
-        table_name = f"ml_{client}_city_list_{os.environ['environment']}",
-        col_partition_key="city_name",
-        partition_key_filter=city_name,
-        col_sort_key=False,
-        sort_key_filter=False,
-        col_value="city_type"
-    )
-
-    city_params = {
-        'city_name': city_name,
-        'client': client,
-        'project': project,
-        'city_types': city_types
-    }
-
     # Request config via API
     response_config = requests.get(
         url=url,
-        auth=auth,
-        params=city_params
+        auth=auth
     )
 
-    # Transform config
+    # Transform config to dictionary
     config = response_config.content
     config = json.loads(config.decode("utf-8"))
 

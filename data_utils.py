@@ -31,11 +31,13 @@ def add_distance_between_two_points_col(
     Returns:
         data: with added col_distance column
     """
+
     data[col_distance] = haversine_vector(
         [tuple(x) for x in data[cols_coords_1].to_numpy()],
         [tuple(x) for x in data[cols_coords_2].to_numpy()],
         unit=unit
     )
+
     return data
 
 
@@ -201,7 +203,6 @@ def ohe(
         pipeline_ohe: OHE pipeline
         cols_features_full: feature columns, including numerical and categorical ohe
     TODO:
-     - try if there is a newer lib that OHE in easiar way
      - create a function for categorical features with lots of unique values (cardinal encoding)
     """
 

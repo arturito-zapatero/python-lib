@@ -48,6 +48,16 @@ def check_folder_exists(
 
 
 def get_ssm_secret(parameter_name: str):
+
+    """
+    Gets a parameter from AWS Parameters Store
+    Args:
+        parameter_name: name of the parameter
+
+    Returns:
+        parameter
+    """
+
     ssm = boto3.client("ssm", region_name="eu-central-1")
     return ssm.get_parameter(
         Name=parameter_name,
@@ -183,9 +193,7 @@ def parse_ecs_arguments(
     Args:
         args: list with dictionaries defining arguments to be parsed, e.g.:
 
-        [{'name': 'city', 'type': 'str', 'is_list': False},
-         {'name': 'city_types', 'type': 'str', 'is_list': True},
-         {'name': 'client', 'type': 'str', 'is_list': False},
+        [{'name': 'client', 'type': 'str', 'is_list': False},
          {'name': 'cloud_environment', 'type': 'str', 'is_list': False},
          {'name': 'project', 'type': 'str', 'is_list': False}]
 
@@ -370,7 +378,7 @@ def s3_load_file_as_df(
         else:
             raise e
 
-    # Read .csv in dataframe
+    # Read .csv or .parquet as dataframe
     if file_type == 'csv':
         data = pd.read_csv(
             temp_file_path,
@@ -399,8 +407,9 @@ def s3_read_json(
     s3_bucket: str,
     key: str
 ) -> dict:
+
     """
-    Function that reads a .json file stored in S3 and returns as a json object.
+    Reads a .json file stored in S3 and returns as a json object.
     Args:
         s3_bucket: bucket name that contains the config file
         key: key pointing to .json file in the bucket
@@ -438,6 +447,7 @@ def s3_read_pipeline(
     s3_bucket: str,
     key: str
 ) -> Pipeline:
+
     """
     Function that reads a sklearn Pipeline file (.sav) stored in S3 and returns as a Pipeline object.
     Args:
@@ -461,7 +471,7 @@ def s3_read_pipeline(
         )
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
-            raise Exception(f"The pipeline requested does not exist in S3 path: {s3_bucket}/{key}")
+            raise Exception(f"The pipeline file requested does not exist in S3 path: {s3_bucket}/{key}")
         else:
             raise e
 
@@ -481,6 +491,7 @@ def s3_store_df(
     delete_files: bool = True,
     logger: [None, logging.Logger] = None
 ) -> [str, str]:
+
     """
     Stores pandas df as file in s3 (storing it first in local and uploading to S3 afterwards). Storage as .csv and
     .parquet files are supported.
@@ -560,6 +571,7 @@ def s3_store_file(
     s3_bucket: str,
     key: str
 ) -> str:
+
     """
     Uploads local file of any type to S3.
     Args:
@@ -570,6 +582,7 @@ def s3_store_file(
     Returns:
         key: key pointing to the stored file in the bucket
     """
+
     try:
         with open(local_file_path, "rb") as local_file:
             s3_client = boto3.client(
@@ -593,6 +606,7 @@ def s3_store_json(
     file_name: [str, None],
     json_dict: dict
 ) -> None:
+
     """
         Uploads python dict to S3 as .json file.
         Args:
@@ -644,6 +658,7 @@ def s3_store_model_pipeline(
     Returns:
         key: key pointing to S3 location where pipeline is stored
     """
+
     temp_dir = tempfile.gettempdir()
     temp_file = os.path.join(temp_dir, file_name)
     joblib.dump(pipeline, temp_file)
