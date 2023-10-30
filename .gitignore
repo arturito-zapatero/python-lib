@@ -7,3 +7,5 @@ __pycache__/api_utils.cpython-38.pyc
 .idea/misc.xml
 .idea/modules.xml
 *.xml
+tutorials/rembg.ipynb
+.idea/.gitignore
